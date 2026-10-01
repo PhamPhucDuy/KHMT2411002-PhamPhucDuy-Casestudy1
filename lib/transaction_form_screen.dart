@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'transaction_model.dart';
+import 'db_helper.dart';
 
 class TransactionFormScreen extends StatefulWidget {
-  // Nếu truyền sẵn dữ liệu -> màn hình "Sửa giao dịch"
-  // Nếu không truyền gì -> màn hình "Thêm giao dịch"
+  // Giữ nguyên các tham số ban đầu + Thêm id (tùy chọn) để xử lý SQLite
+  final int? id;
   final String? initialAmount;
   final String? initialNote;
   final DateTime? initialDate;
 
   const TransactionFormScreen({
     super.key,
+    this.id,
     this.initialAmount,
     this.initialNote,
     this.initialDate,
@@ -27,7 +30,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   final List<String> categories = ['Ăn uống', 'Di chuyển', 'Mua sắm', 'Hóa đơn', 'Khác'];
 
-  bool get isEditMode => widget.initialAmount != null;
+  bool get isEditMode => widget.id != null || widget.initialAmount != null;
 
   @override
   void initState() {
@@ -58,6 +61,41 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   String _formatDate(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  }
+
+  // HÀM LƯU / SỬA VÀO DATABASE SQLITE (BUỔI 5)
+  Future<void> _saveTransaction() async {
+    final note = noteController.text.trim();
+    final amountText = amountController.text.trim();
+
+    if (note.isEmpty || amountText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin!')),
+      );
+      return;
+    }
+
+    final double amount = double.tryParse(amountText) ?? 0.0;
+    final dateStr = _formatDate(selectedDate);
+
+    final model = TransactionModel(
+      id: widget.id,
+      title: note,
+      amount: amount,
+      date: dateStr,
+      category: selectedCategory,
+      isExpense: isExpense,
+    );
+
+    if (widget.id != null) {
+      await DatabaseHelper.instance.updateTransaction(model);
+    } else {
+      await DatabaseHelper.instance.insertTransaction(model);
+    }
+
+    if (mounted) {
+      Navigator.pop(context, true); // Trả về true để Dashboard reload dữ liệu
+    }
   }
 
   @override
@@ -190,10 +228,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: xử lý lưu giao dịch (sẽ làm ở buổi 5-6 khi có database)
-                  Navigator.pop(context);
-                },
+                onPressed: _saveTransaction, // Gắn hàm lưu Database
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
