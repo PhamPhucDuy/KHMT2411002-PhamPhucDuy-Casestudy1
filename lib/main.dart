@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'transaction_form_screen.dart';
+import 'dashboard_screen.dart';
 void main() {
   runApp(const MyApp());
 }
@@ -81,8 +82,14 @@ class WelcomeScreen extends StatelessWidget {
                         builder: (context) => const TransactionFormScreen(),
                       ),
                     );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DashboardScreen(),
+                      ),
+                    );
                   },
-                    // TODO: chuyển sang màn hình tiếp theo
+                  // TODO: chuyển sang màn hình tiếp theo
 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
