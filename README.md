@@ -1,4 +1,4 @@
-# case1
+# casestudy1
 
 A new Flutter project.
 
